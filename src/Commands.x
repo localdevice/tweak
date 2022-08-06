@@ -10,7 +10,7 @@ NSDictionary* createResponse(NSString *uuid, NSString *data) {
   return response;
 }
 
-// Send a response back
+// Send a response back
 void sendResponse(NSDictionary *response) {
   NSError *err;
   NSData *data = [NSJSONSerialization
@@ -85,7 +85,7 @@ void handleThemeInstall(NSString *uuid, NSURL *url, BOOL exists, NSString *theme
   }
 
   if ([uuid isEqualToString:@"-1"]) {
-    alert([NSString stringWithFormat:@"An error happened while installing %@.", themeName]);
+    alert([NSString stringWithFormat:@"An error occured while installing %@.", themeName]);
     return;
   }
 
@@ -135,7 +135,7 @@ void handleCommand(NSDictionary *command) {
       }
 
       if ([uuid isEqualToString:@"-1"]) {
-        alert([NSString stringWithFormat:@"An error happened while installing %@.", pluginName]);
+        alert([NSString stringWithFormat:@"An error occured while installing %@.", pluginName]);
         return;
       }
 
@@ -157,11 +157,11 @@ void handleCommand(NSDictionary *command) {
     confirm(@"Uninstall plugin", [NSString stringWithFormat:@"Are you sure you want to uninstall %@?", pluginName], ^() {
       BOOL success = deletePlugin(pluginName);
       if (success) {
-        sendResponse(createResponse(uuid, [NSString stringWithFormat:@"**%@** has been removed.", pluginName]));
+        sendResponse(createResponse(uuid, [NSString stringWithFormat:@"**%@** has been uninstalled.", pluginName]));
         return;
       }
 
-      sendResponse(createResponse(uuid, [NSString stringWithFormat:@"An error happened while removed *%@*.", pluginName]));
+      sendResponse(createResponse(uuid, [NSString stringWithFormat:@"An error occured while removing *%@*.", pluginName]));
     });
   }
 
@@ -201,7 +201,7 @@ void handleCommand(NSDictionary *command) {
         return;
       }
 
-      sendResponse(createResponse(uuid, @"An error happened while uninstalling the theme."));
+      sendResponse(createResponse(uuid, @"An error occured while uninstalling the theme."));
     });
   }
 
