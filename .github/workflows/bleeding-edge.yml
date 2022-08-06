@@ -1,4 +1,4 @@
-name: Create a bleeding-edge release
+name: Build Enmity (Bleeding Edge)
 on:
   push:
     branches:
@@ -7,32 +7,25 @@ on:
 
 jobs:
   build:
-    name: Build and publish Enmity Alpha for iOS
+    name: Build Enmity (Bleeding Edge)
     runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v2
+    steps:   
+      - uses: actions/checkout@v3
         with:
           ref: 'bleeding-edge'
           submodules: true
 
-      - name: Check cache
-        id: verifiy-cache
-        run: |
-          echo "::set-output name=heads::`git ls-remote https://github.com/theos/theos | head -n 1 | cut -f 1`-`git ls-remote https://github.com/theos/sdks | head -n 1 | cut -f 1`"
-
-      - name: Use cache
-        uses: actions/cache@v2
-        with:
-          path: |
-            ${{ github.workspace }}/theos
-          key: ${{ runner.os }}-${{ steps.verify-cache.outputs.heads }}
-
       - name: Prepare Theos
-        uses: Randomblock1/theos-action@v1
-
+        uses: localdevice/theos-action@main
+        with:
+          cache-dir-theos: ${{ github.workspace }}/theos
+          cache-dir-sdks: ${{ github.workspace }}/theos/sdks
+          
       - name: Prepare Azule
-        run : |
-          git clone https://github.com/Al4ise/Azule ${{ github.workspace }}/Azule
+        uses: actions/checkout@v3
+        with:
+          repository: Al4ise/Azule
+          path: Azule
 
       - name: Prepare Enmity Patcher
         run : |
@@ -43,27 +36,23 @@ jobs:
         run : |
           ${{ github.workspace }}/patcher
 
-      - name: Build package
-        run: |
-          rm -f packages/*
-          make package FINALPACKAGE=1 BETA=1
-
-      - name: Find deb
+      - name: Build Package
         id: find_deb
         run : |
+          gmake clean package FINALPACKAGE=1 BETA=1
           echo "::set-output name=deb::$(find packages -name "*.deb" -print -quit)"
 
-      - name: Create Enmity.ipa
+      - name: Create IPA
         run : |
           mkdir out
           ${{ github.workspace }}/Azule/azule -p "Enmity Alpha" -i Enmity.ipa -o out -f ${{ steps.find_deb.outputs.deb }}
           mv $(find out -name "*.ipa" -print -quit) out/Enmity-Alpha.ipa
 
-      - name: Set outputs
+      - name: Set Outputs
         id: vars
         run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
 
-      - name: Create release
+      - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: alpha-${{ steps.vars.outputs.sha_short }}
