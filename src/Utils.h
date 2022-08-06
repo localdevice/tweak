@@ -6,7 +6,7 @@
 
 #ifdef BETA
 #   define IS_BLEEDING_EDGE true
-#   define ENMITY_URL @"https://raw.githubusercontent.com/enmity-mod/enmity/main/dist/Enmity.js"
+#   define ENMITY_URL @"https://raw.githubusercontent.com/localdevice/enmity/main/dist/Enmity.js"
 #else
 #   define IS_BLEEDING_EDGE false
 #   define ENMITY_URL @"https://files.enmity.app/Enmity.js"
