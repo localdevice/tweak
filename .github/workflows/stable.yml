@@ -1,4 +1,4 @@
-name: Create a stable release
+name: Build Enmity (Stable)
 on:
   push:
     tags:
@@ -10,32 +10,31 @@ on:
 
 jobs:
   build:
-    name: Build and publish Enmity for iOS
+    name: Build Enmity (Stable)
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           ref: 'main'
           submodules: true
-
-      - name: Check cache
-        id: verifiy-cache
-        run: |
-          echo "::set-output name=heads::`git ls-remote https://github.com/theos/theos | head -n 1 | cut -f 1`-`git ls-remote https://github.com/theos/sdks | head -n 1 | cut -f 1`"
-
-      - name: Use cache
-        uses: actions/cache@v2
+          
+      - name: Prepare Procursus
+        uses: localdevice/procursus-action@main
         with:
-          path: |
-            ${{ github.workspace }}/theos
-          key: ${{ runner.os }}-${{ steps.verify-cache.outputs.heads }}
+          packages: ldid make
+          cache-path: ${{ github.workspace }}/procursus
 
       - name: Prepare Theos
-        uses: Randomblock1/theos-action@v1
+        uses: localdevice/theos-action@main
+        with:
+          cache-dir-theos: ${{ github.workspace }}/theos
+          cache-dir-sdks: ${{ github.workspace }}/theos/sdks
 
       - name: Prepare Azule
-        run : |
-          git clone https://github.com/Al4ise/Azule ${{ github.workspace }}/Azule
+        uses: actions/checkout@v3
+        with:
+          repository: Al4ise/Azule
+          path: Azule
 
       - name: Prepare Enmity Patcher
         run : |
@@ -46,23 +45,19 @@ jobs:
         run : |
           ${{ github.workspace }}/patcher
 
-      - name: Build package
-        run: |
-          rm -f packages/*
-          make package FINALPACKAGE=1
-
-      - name: Find deb
+      - name: Build Package
         id: find_deb
         run : |
+          gmake clean package FINALPACKAGE=1
           echo "::set-output name=deb::$(find packages -name "*.deb" -print -quit)"
 
-      - name: Create Enmity.ipa
+      - name: Create IPA
         run : |
           mkdir out
           ${{ github.workspace }}/Azule/azule -i Enmity.ipa -o out -f ${{ steps.find_deb.outputs.deb }}
           mv $(find out -name "*.ipa" -print -quit) out/Enmity.ipa
 
-      - name: Create release
+      - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: release-${{ github.ref_name }}
