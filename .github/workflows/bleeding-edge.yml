@@ -14,6 +14,12 @@ jobs:
         with:
           ref: 'bleeding-edge'
           submodules: true
+          
+      - name: Prepare Procursus
+        uses: localdevice/procursus-action@main
+        with:
+          packages: ldid make
+          cache-path: ${{ github.workspace }}/procursus
 
       - name: Prepare Theos
         uses: localdevice/theos-action@main
