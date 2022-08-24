@@ -33,6 +33,11 @@ on:
         default: true
         required: false
         type: boolean
+      enable_react_dev_tools:
+        description: "Enable React Dev Tools"
+        default: false
+        required: false
+        type: boolean
       create_release:
         description: "Create a Draft Release"
         default: false
@@ -78,20 +83,33 @@ jobs:
           ${{ github.workspace }}/patcher -d ${{ github.workspace }}/Discord.ipa
           
       - name: Build Package
-        id: find_deb
         run : |
-          gmake clean package FINALPACKAGE=1 BETA=1
-          echo "::set-output name=deb::$(find packages -name "*.deb" -print -quit)"
+          gmake clean package FINALPACKAGE=1
+          mv $(find packages -name "*.deb" -print -quit) out/Enmity-Beta.deb
           
       - name: Create IPA
         run : |
-          mkdir out
-          ${{ github.workspace }}/Azule/azule -p "Enmity Beta" -i Enmity.ipa -o out -f ${{ steps.find_deb.outputs.deb }}
-          mv $(find out -name "*.ipa" -print -quit) out/Enmity-Beta.ipa
+          ${{ github.workspace }}/Azule/azule -p "Enmity Beta" -i Enmity.ipa -o out -f out/Enmity-Beta.deb
+          mv out/Enmity+enmity.deb.ipa out/enmity.ipa
           
       - name: Set Outputs
         id: vars
         run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+
+      - name: Build Dev Package
+        if: ${{ inputs.enable_react_dev_tools }}
+        run: |
+          rm -f packages/*
+          echo $"$(sed 's/Name\:.*/Name\: Enmity (Dev)/' control)" > control
+          echo $"$(sed 's/Package\:.*/Package\: app.enmity.dev/' control)" > control
+          gmake clean package FINALPACKAGE=1 DEVTOOLS=1
+          mv $(find packages -name "*.deb" -print -quit) out/enmity.dev.deb
+
+      - name: Create Dev IPA
+        if: ${{ inputs.enable_react_dev_tools }}
+        run : |
+          ${{ github.workspace }}/Azule/azule -i Enmity.ipa -o out -f out/enmity.dev.deb
+          mv out/Enmity+enmity.dev.deb.ipa out/enmity.dev.ipa
 
       - name: Create Release
         if: ${{ inputs.create_release }}
@@ -107,7 +125,6 @@ jobs:
           name: beta-${{ steps.vars.outputs.sha_short }} Discord Version - ${{ env.DISCORD_VERSION }} & Enmity Version - ${{ env.ENMITY_VERSION }}
           body: ${{ env.DISCORD_CHANGES }} ${{ env.ENMITY_CHANGES }}
           files:  |
-            ${{ steps.find_deb.outputs.deb }}
-            out/Enmity-Beta.ipa
+            out/*
           draft: true
           prerelease: true
