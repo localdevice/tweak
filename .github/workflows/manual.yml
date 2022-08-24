@@ -81,16 +81,18 @@ jobs:
         run : |
           curl -L ${{ inputs.decrypted_discord }} -o ${{ github.workspace }}/Discord.ipa
           ${{ github.workspace }}/patcher -d ${{ github.workspace }}/Discord.ipa
+          mkdir out
           
       - name: Build Package
-        run : |
+        run: |
+          rm -f packages/*
           gmake clean package FINALPACKAGE=1
-          mv $(find packages -name "*.deb" -print -quit) out/Enmity-Beta.deb
+          mv $(find packages -name "*.deb" -print -quit) out/enmity.beta.deb
           
       - name: Create IPA
         run : |
-          ${{ github.workspace }}/Azule/azule -p "Enmity Beta" -i Enmity.ipa -o out -f out/Enmity-Beta.deb
-          mv out/Enmity+enmity.deb.ipa out/enmity.ipa
+          ${{ github.workspace }}/Azule/azule -p "Enmity Beta" -i Enmity.ipa -o out -f out/enmity.beta.deb
+          mv out/Enmity+enmity.beta.deb.ipa out/enmity.ipa
           
       - name: Set Outputs
         id: vars
