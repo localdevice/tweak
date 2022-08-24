@@ -92,7 +92,7 @@ jobs:
       - name: Create IPA
         run : |
           ${{ github.workspace }}/Azule/azule -p "Enmity Beta" -i Enmity.ipa -o out -f out/enmity.beta.deb
-          mv out/Enmity+enmity.beta.deb.ipa out/enmity.ipa
+          mv out/Enmity+enmity.beta.deb.ipa out/enmity.beta.ipa
           
       - name: Set Outputs
         id: vars
