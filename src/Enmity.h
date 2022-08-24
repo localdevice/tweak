@@ -10,10 +10,10 @@
 #define ENMITY_SOURCE [NSURL URLWithString:@"enmity"]
 
 // Define the URL used to download Enmity, also disable logs in release mode
-#ifdef DEBUG
-#   define IS_DEBUG true
-#		define NSLog(fmt, ... ) NSLog((@"[Enmity-iOS] " fmt), ##__VA_ARGS__);
-#else 
+// #ifdef DEBUG
+// #   define IS_DEBUG true
+// #		define NSLog(fmt, ... ) NSLog((@"[Enmity-iOS] " fmt), ##__VA_ARGS__);
+// #else
 #   define IS_DEBUG false
-#		define NSLog(...) (void)0
-#endif
+// #		define NSLog(...) (void)0
+// #endif

@@ -44,23 +44,35 @@ jobs:
       - name: Patch Discord
         run : |
           ${{ github.workspace }}/patcher
+          mkdir out
 
       - name: Build Package
-        id: find_deb
-        run : |
+        run: |
+          rm -f packages/*
           gmake clean package FINALPACKAGE=1
-          echo "::set-output name=deb::$(find packages -name "*.deb" -print -quit)"
+          mv $(find packages -name "*.deb" -print -quit) out/enmity.deb
 
       - name: Create IPA
         run : |
-          mkdir out
-          ${{ github.workspace }}/Azule/azule -i Enmity.ipa -o out -f ${{ steps.find_deb.outputs.deb }}
-          mv $(find out -name "*.ipa" -print -quit) out/Enmity.ipa
+          ${{ github.workspace }}/Azule/azule -i Enmity.ipa -o out -f out/enmity.deb
+          mv out/Enmity+enmity.deb.ipa out/enmity.ipa
+
+      - name: Build Dev Deb
+        run: |
+          rm -f packages/*
+          echo $"$(sed 's/Name\:.*/Name\: Enmity (Dev)/' control)" > control
+          echo $"$(sed 's/Package\:.*/Package\: app.enmity.dev/' control)" > control
+          make clean package FINALPACKAGE=1 DEVTOOLS=1
+          mv $(find packages -name "*.deb" -print -quit) out/enmity.dev.deb
+
+      - name: Create Enmity.Dev.ipa
+        run : |
+          ${{ github.workspace }}/Azule/azule -i Enmity.ipa -o out -f out/enmity.dev.deb
+          mv out/Enmity+enmity.dev.deb.ipa out/enmity.dev.ipa
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: v${{ github.ref_name }}
           files:  |
-            ${{ steps.find_deb.outputs.deb }}
-            out/Enmity.ipa
+            out/*
