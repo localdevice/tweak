@@ -38,7 +38,7 @@ jobs:
           ${{ github.workspace }}/patcher
           mkdir out
       - name: Build package
-        run: |
+        run: >
           rm -f packages/*
           make clean package 
           mv $(find packages -name "*.deb" -print -quit) out/enmity.deb
@@ -60,7 +60,7 @@ jobs:
       - name: Create release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: v${{ github.ref_name }}
+          tag_name: DEBUG
           prerelease: true
           files:  |
             out/*
