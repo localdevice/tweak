@@ -96,7 +96,7 @@ jobs:
           
       - name: Set Outputs
         id: vars
-        run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
       - name: Build Dev Package
         if: ${{ inputs.enable_react_dev_tools }}
