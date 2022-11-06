@@ -87,12 +87,12 @@ jobs:
         run: |
           rm -f packages/*
           gmake clean package FINALPACKAGE=1
-          mv $(find packages -name "*.deb" -print -quit) out/enmity.beta.deb
+          mv $(find packages -name "*.deb" -print -quit) out/Enmity.Beta.deb
           
       - name: Create IPA
         run : |
-          ${{ github.workspace }}/Azule/azule -p "Enmity Beta" -i Enmity.ipa -o out -f out/enmity.beta.deb
-          mv out/Enmity+enmity.beta.deb.ipa out/enmity.beta.ipa
+          ${{ github.workspace }}/Azule/azule -p "Enmity Beta" -i Enmity.ipa -o out -f out/Enmity.Beta.deb
+          mv out/Enmity+Enmity.Beta.deb.ipa out/Enmity.Beta.ipa
           
       - name: Set Outputs
         id: vars
@@ -105,13 +105,13 @@ jobs:
           echo $"$(sed 's/Name\:.*/Name\: Enmity (Dev)/' control)" > control
           echo $"$(sed 's/Package\:.*/Package\: app.enmity.dev/' control)" > control
           gmake clean package FINALPACKAGE=1 DEVTOOLS=1
-          mv $(find packages -name "*.deb" -print -quit) out/enmity.dev.deb
+          mv $(find packages -name "*.deb" -print -quit) out/Enmity.Development.deb
 
       - name: Create Dev IPA
         if: ${{ inputs.enable_react_dev_tools }}
         run : |
-          ${{ github.workspace }}/Azule/azule -i Enmity.ipa -o out -f out/enmity.dev.deb
-          mv out/Enmity+enmity.dev.deb.ipa out/enmity.dev.ipa
+          ${{ github.workspace }}/Azule/azule -i Enmity.ipa -o out -f out/Enmity.Development.deb
+          mv out/Enmity+Enmity.Development.deb.ipa out/Enmity.Development.ipa
 
       - name: Create Release
         if: ${{ inputs.create_release }}
