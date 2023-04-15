@@ -2,11 +2,7 @@
 #import "../headers/RCTRootView.h"
 #import "../headers/RCTCxxBridge.h"
 
-# ifdef THEOS_PACKAGE_INSTALL_PREFIX
-#   define ENMITY_PATH [NSString stringWithFormat:@"%@/%@", THEOS_PACKAGE_INSTALL_PREFIX, @"/Library/Application Support/Enmity/EnmityFiles.bundle"]
-# else
-#   define BUNDLE_PATH @"/Library/Application Support/Enmity/EnmityFiles.bundle"
-# endif
+#define BUNDLE_PATH @THEOS_PACKAGE_INSTALL_PREFIX "/Library/Application Support/Enmity/EnmityFiles.bundle"
 
 NSString* getDownloadURL();
 BOOL checkForUpdate();
