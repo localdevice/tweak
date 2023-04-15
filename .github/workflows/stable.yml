@@ -1,11 +1,7 @@
 name: Build Enmity (Stable)
 on:
   push:
-    tags:
-       - '*'
   pull_request:
-    tags:
-      - '*'
   workflow_dispatch:
 
 jobs:
@@ -31,10 +27,10 @@ jobs:
           cache-dir-sdks: ${{ github.workspace }}/theos/sdks
 
       - name: Prepare Azule
-        uses: actions/checkout@v3
-        with:
-          repository: Al4ise/Azule
-          path: Azule
+        run : |
+          git clone https://github.com/Al4ise/Azule ${{ github.workspace }}/Azule
+          cd Azule
+          git checkout 27c02b415cff15b1c131a0e95bcc2438023f86da
 
       - name: Prepare Enmity Patcher
         run : |
@@ -46,18 +42,17 @@ jobs:
           ${{ github.workspace }}/patcher
           mkdir out
 
-      - name: Build Package
+      - name: Retrieve version
+        id: version
+        run: echo "::set-output name=__ENMITY_VERSION::$(cat control | grep -E 'Version:(.*)' | awk '{ print $2 }')"   
+
+      - name: Build deb
         run: |
           rm -f packages/*
           gmake clean package FINALPACKAGE=1
           mv $(find packages -name "*.deb" -print -quit) out/Enmity.deb
 
-      - name: Create IPA
-        run : |
-          ${{ github.workspace }}/Azule/azule -i Enmity.ipa -o out -f out/Enmity.deb
-          mv out/Enmity+Enmity.deb.ipa out/Enmity.ipa
-
-      - name: Build Dev Deb
+      - name: Build dev deb
         run: |
           rm -f packages/*
           echo $"$(sed 's/Name\:.*/Name\: Enmity (Dev)/' control)" > control
@@ -65,14 +60,37 @@ jobs:
           gmake clean package FINALPACKAGE=1 DEVTOOLS=1
           mv $(find packages -name "*.deb" -print -quit) out/Enmity.Development.deb
 
+      - name: Build rootless deb
+        run: |
+          rm -f packages/*
+          echo $"$(sed 's/Name\:.*/Name\: Enmity (Rootless)/' control)" > control
+          echo $"$(sed 's/Package\:.*/Package\: app.enmity.rootless/' control)" > control
+          gmake clean package FINALPACKAGE=1 THEOS_PACKAGE_SCHEME=rootless
+          mv $(find packages -name "*.deb" -print -quit) out/Enmity.Rootless.deb
+
+      - name: Build dev rootless deb
+        run: |
+          rm -f packages/*
+          echo $"$(sed 's/Name\:.*/Name\: Enmity (Rootless)/' control)" > control
+          echo $"$(sed 's/Package\:.*/Package\: app.enmity.rootless/' control)" > control
+          gmake clean package FINALPACKAGE=1 DEVTOOLS=1 THEOS_PACKAGE_SCHEME=rootless
+          mv $(find packages -name "*.deb" -print -quit) out/Enmity.Rootless.Development.deb
+
+      - name: Create Enmity.ipa
+        run : |
+          ${{ github.workspace }}/Azule/azule -U -i Enmity.ipa -o out -f out/Enmity.deb
+          mv out/Enmity+Enmity.deb.ipa out/Enmity.ipa
+
       - name: Create Enmity.Dev.ipa
         run : |
-          ${{ github.workspace }}/Azule/azule -i Enmity.ipa -o out -f out/Enmity.Development.deb
+          ${{ github.workspace }}/Azule/azule -U -i Enmity.ipa -o out -f out/Enmity.Development.deb
           mv out/Enmity+Enmity.Development.deb.ipa out/Enmity.Development.ipa
 
-      - name: Create Release
-        uses: softprops/action-gh-release@v1
+      - name: Create release
+        uses: marvinpinto/action-automatic-releases@latest
         with:
-          tag_name: v${{ github.ref_name }}
-          files:  |
-            out/*
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          prerelease: false
+          automatic_release_tag: v${{ steps.version.outputs.__ENMITY_VERSION }}
+          title: "Enmity v${{ steps.version.outputs.__ENMITY_VERSION }}"
+          files: out/*
