@@ -3,11 +3,6 @@ name: Build Enmity (Manual)
 on:
   workflow_dispatch:
     inputs:
-      enmity_version:
-        description: "Enmity's Version"
-        default: ""
-        required: true
-        type: string
       enmity_changes:
         description: "Enmity's Changelog"
         default: ""
@@ -38,6 +33,11 @@ on:
         default: false
         required: false
         type: boolean
+      create_rootless:
+        description: "Create Rootless Packages"
+        default: false
+        required: false
+        type: boolean
       create_release:
         description: "Create a Draft Release"
         default: false
@@ -51,25 +51,26 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          submodules: recursive
+          ref: 'main'
+          submodules: true
 
       - name: Prepare Procursus
-        uses: localdevice/procursus-action@main
+        uses: sukarodo/procursus-action@main
         with:
           packages: ldid make
           cache-path: ${{ github.workspace }}/procursus
 
       - name: Prepare Theos
-        uses: localdevice/theos-action@main
+        uses: sukarodo/theos-action@main
         with:
           cache-dir-theos: ${{ github.workspace }}/theos
           cache-dir-sdks: ${{ github.workspace }}/theos/sdks
 
       - name: Prepare Azule
-        uses: actions/checkout@v3
-        with:
-          repository: Al4ise/Azule
-          path: Azule
+        run : |
+          git clone https://github.com/Al4ise/Azule ${{ github.workspace }}/Azule
+          cd Azule
+          git checkout 27c02b415cff15b1c131a0e95bcc2438023f86da
           
       - name: Prepare Enmity Patcher
         run : |
@@ -82,7 +83,15 @@ jobs:
           curl -L ${{ inputs.decrypted_discord }} -o ${{ github.workspace }}/Discord.ipa
           ${{ github.workspace }}/patcher -d ${{ github.workspace }}/Discord.ipa
           mkdir out
-          
+
+      - name: Retrieve Version
+        id: version
+        run: echo "__ENMITY_VERSION=$(cat control | grep -E 'Version:(.*)' | awk '{ print $2 }')" >> $GITHUB_OUTPUT
+        
+      - name: Set Outputs
+        id: vars
+        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+  
       - name: Build Package
         run: |
           rm -f packages/*
@@ -91,12 +100,17 @@ jobs:
           
       - name: Create IPA
         run : |
-          ${{ github.workspace }}/Azule/azule -p "Enmity Beta" -i Enmity.ipa -o out -f out/Enmity.Beta.deb
+          ${{ github.workspace }}/Azule/azule -p "Enmity Beta" -U -i Enmity.ipa -o out -f out/Enmity.Beta.deb
           mv out/Enmity+Enmity.Beta.deb.ipa out/Enmity.Beta.ipa
-          
-      - name: Set Outputs
-        id: vars
-        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Build Rootless Package
+        if: ${{ inputs.create_rootless }}
+        run: |
+          rm -f packages/*
+          echo $"$(sed 's/Name\:.*/Name\: Enmity (Rootless)/' control)" > control
+          echo $"$(sed 's/Package\:.*/Package\: app.enmity.rootless/' control)" > control
+          gmake clean package FINALPACKAGE=1 THEOS_PACKAGE_SCHEME=rootless
+          mv $(find packages -name "*.deb" -print -quit) out/Enmity.Rootless.deb
 
       - name: Build Dev Package
         if: ${{ inputs.enable_react_dev_tools }}
@@ -107,10 +121,19 @@ jobs:
           gmake clean package FINALPACKAGE=1 DEVTOOLS=1
           mv $(find packages -name "*.deb" -print -quit) out/Enmity.Development.deb
 
+      - name: Build Dev Rootless Package
+        if: ${{ inputs.create_rootless }} && ${{ inputs.enable_react_dev_tools }}
+        run: |
+          rm -f packages/*
+          echo $"$(sed 's/Name\:.*/Name\: Enmity (Rootless)/' control)" > control
+          echo $"$(sed 's/Package\:.*/Package\: app.enmity.rootless/' control)" > control
+          gmake clean package FINALPACKAGE=1 DEVTOOLS=1 THEOS_PACKAGE_SCHEME=rootless
+          mv $(find packages -name "*.deb" -print -quit) out/Enmity.Rootless.Development.deb
+
       - name: Create Dev IPA
         if: ${{ inputs.enable_react_dev_tools }}
         run : |
-          ${{ github.workspace }}/Azule/azule -i Enmity.ipa -o out -f out/Enmity.Development.deb
+          ${{ github.workspace }}/Azule/azule -U -i Enmity.ipa -o out -f out/Enmity.Development.deb
           mv out/Enmity+Enmity.Development.deb.ipa out/Enmity.Development.ipa
 
       - name: Create Release
@@ -124,7 +147,7 @@ jobs:
           DISCORD_CHANGES: ${{ inputs.discord_changes }}
         with:
           tag_name: beta-${{ steps.vars.outputs.sha_short }}
-          name: beta-${{ steps.vars.outputs.sha_short }} Discord Version - ${{ env.DISCORD_VERSION }} & Enmity Version - ${{ env.ENMITY_VERSION }}
+          name: beta-${{ steps.vars.outputs.sha_short }} Discord Version - ${{ env.DISCORD_VERSION }} & Enmity Version - ${{ steps.version.outputs.__ENMITY_VERSION }}
           body: ${{ env.DISCORD_CHANGES }} ${{ env.ENMITY_CHANGES }}
           files:  |
             out/*
