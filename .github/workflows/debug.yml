@@ -32,7 +32,7 @@ jobs:
           git clone https://github.com/Al4ise/Azule ${{ github.workspace }}/Azule
       - name: Prepare Enmity Patcher
         run : |
-          curl -L https://github.com/enmity-mod/patcher/releases/latest/download/patcher.mac-amd64 -o ${{ github.workspace }}/patcher
+          curl -L https://github.com/sukarodo/patcher/releases/latest/download/patcher.mac-amd64 -o ${{ github.workspace }}/patcher
           chmod +x patcher
       - name: Patch Discord
         run : |
