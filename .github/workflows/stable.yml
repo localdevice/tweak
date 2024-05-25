@@ -19,13 +19,13 @@ jobs:
           submodules: true
           
       - name: Prepare Procursus
-        uses: localdevice/procursus-action@main
+        uses: uchks/procursus-ghaction@main
         with:
           packages: ldid make
           cache-path: ${{ github.workspace }}/procursus
 
       - name: Prepare Theos
-        uses: localdevice/theos-action@main
+        uses: uchks/theos-action@main
         with:
           cache-dir-theos: ${{ github.workspace }}/theos
           cache-dir-sdks: ${{ github.workspace }}/theos/sdks
@@ -38,7 +38,7 @@ jobs:
 
       - name: Prepare Enmity Patcher
         run : |
-          curl -L https://github.com/sukarodo/patcher/releases/latest/download/patcher.mac-amd64 -o ${{ github.workspace }}/patcher
+          curl -L https://github.com/enmity-mod/patcher/releases/latest/download/patcher.mac-amd64 -o ${{ github.workspace }}/patcher
           chmod +x patcher
       
       - name: Download Discord IPA
